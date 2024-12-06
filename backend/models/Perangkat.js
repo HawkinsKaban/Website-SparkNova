@@ -1,35 +1,43 @@
-// models/Perangkat.js
+// models/Device.js
 const mongoose = require('mongoose');
 
-const perangkatSchema = new mongoose.Schema({
-  idPengguna: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Pengguna',
-    required: true
-  },
-  idPerangkat: {
+const deviceSchema = new mongoose.Schema({
+  deviceId: {
     type: String,
     required: true,
     unique: true
   },
-  nama: {
+  name: {
     type: String,
-    required: [true, 'Nama perangkat wajib diisi']
+    required: true
   },
-  lokasi: String,
-  statusRelay: {
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
+  wifiSSID: String,
+  wifiPassword: String,
+  lastConnection: Date,
+  status: {
+    type: String,
+    enum: ['connected', 'disconnected', 'configuring'],
+    default: 'disconnected'
+  },
+  relayState: {
     type: Boolean,
     default: false
   },
-  statusKoneksi: {
-    type: String,
-    enum: ['terhubung', 'terputus', 'konfigurasi'],
-    default: 'terputus'
-  },
-  waktuAktifTerakhir: Date
-}, { 
-  timestamps: true,
-  indexes: [{ idPengguna: 1, idPerangkat: 1 }]
-});
+  thresholds: {
+    warning: {
+      type: Number,
+      default: 800
+    },
+    critical: {
+      type: Number,
+      default: 1000
+    }
+  }
+}, { timestamps: true });
 
-module.exports = mongoose.model('Perangkat', perangkatSchema);
+module.exports = mongoose.model('Device', deviceSchema);
