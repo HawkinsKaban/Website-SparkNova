@@ -1,6 +1,6 @@
 // middleware/auth.js
 const jwt = require('jsonwebtoken');
-const User = require('../models/User');
+const User = require('../models/Pengguna');
 
 exports.protect = async (req, res, next) => {
   try {
@@ -12,8 +12,8 @@ exports.protect = async (req, res, next) => {
 
     if (!token) {
       return res.status(401).json({
-        success: false,
-        message: 'Akses ditolak. Login diperlukan'
+        sukses: false,
+        pesan: 'Akses ditolak. Login diperlukan'
       });
     }
 
@@ -23,15 +23,39 @@ exports.protect = async (req, res, next) => {
       next();
     } catch (err) {
       return res.status(401).json({
-        success: false,
-        message: 'Token tidak valid'
+        sukses: false,
+        pesan: 'Token tidak valid'
       });
     }
   } catch (error) {
     return res.status(500).json({
-      success: false,
-      message: 'Server Error'
+      sukses: false,
+      pesan: 'Server Error'
     });
   }
 };
 
+// middleware/validasi.js
+const { check } = require('express-validator');
+
+exports.validasiRegistrasi = [
+  check('username')
+    .trim()
+    .isLength({ min: 3 })
+    .withMessage('Username minimal 3 karakter'),
+  check('email')
+    .isEmail()
+    .withMessage('Email tidak valid'),
+  check('password')
+    .isLength({ min: 6 })
+    .withMessage('Password minimal 6 karakter')
+];
+
+exports.validasiLogin = [
+  check('email')
+    .isEmail()
+    .withMessage('Email tidak valid'),
+  check('password')
+    .exists()
+    .withMessage('Password diperlukan')
+];

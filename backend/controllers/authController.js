@@ -1,4 +1,4 @@
-const User = require('../models/User');
+const { Pengguna } = require('../models');
 const jwt = require('jsonwebtoken');
 
 const generateToken = (id) => {
@@ -11,36 +11,46 @@ exports.register = async (req, res) => {
   try {
     const { username, email, password } = req.body;
 
-    const userExists = await User.findOne({ $or: [{ email }, { username }] });
-    if (userExists) {
+    // Cek apakah username atau email sudah terdaftar
+    const penggunaExists = await Pengguna.findOne({ 
+      $or: [
+        { namaUser: username }, 
+        { email: email.toLowerCase() }
+      ] 
+    });
+
+    if (penggunaExists) {
       return res.status(400).json({
-        success: false,
-        message: 'Username atau email sudah terdaftar'
+        sukses: false,
+        pesan: 'Username atau email sudah terdaftar'
       });
     }
 
-    const user = await User.create({
-      username,
-      email,
-      password
+    // Buat pengguna baru
+    const pengguna = await Pengguna.create({
+      namaUser: username,
+      email: email.toLowerCase(),
+      kataSandi: password
     });
 
-    const token = generateToken(user._id);
+    // Generate token
+    const token = generateToken(pengguna._id);
 
     res.status(201).json({
-      success: true,
+      sukses: true,
       token,
-      user: {
-        id: user._id,
-        username: user.username,
-        email: user.email,
-        role: user.role
+      pengguna: {
+        id: pengguna._id,
+        username: pengguna.namaUser,
+        email: pengguna.email,
+        peran: pengguna.peran
       }
     });
   } catch (error) {
+    console.error('Register Error:', error);
     res.status(500).json({
-      success: false,
-      message: error.message
+      sukses: false,
+      pesan: error.message
     });
   }
 };
@@ -49,38 +59,42 @@ exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    const user = await User.findOne({ email });
-    if (!user) {
+    // Cari pengguna berdasarkan email
+    const pengguna = await Pengguna.findOne({ email: email.toLowerCase() });
+    if (!pengguna) {
       return res.status(401).json({
-        success: false,
-        message: 'Email atau password salah'
+        sukses: false,
+        pesan: 'Email atau kata sandi salah'
       });
     }
 
-    const isMatch = await user.matchPassword(password);
+    // Verifikasi kata sandi
+    const isMatch = await pengguna.cocokkanKataSandi(password);
     if (!isMatch) {
       return res.status(401).json({
-        success: false,
-        message: 'Email atau password salah'
+        sukses: false,
+        pesan: 'Email atau kata sandi salah'
       });
     }
 
-    const token = generateToken(user._id);
+    // Generate token
+    const token = generateToken(pengguna._id);
 
     res.json({
-      success: true,
+      sukses: true,
       token,
-      user: {
-        id: user._id,
-        username: user.username,
-        email: user.email,
-        role: user.role
+      pengguna: {
+        id: pengguna._id,
+        username: pengguna.namaUser,
+        email: pengguna.email,
+        peran: pengguna.peran
       }
     });
   } catch (error) {
+    console.error('Login Error:', error);
     res.status(500).json({
-      success: false,
-      message: error.message
+      sukses: false,
+      pesan: error.message
     });
   }
 };
